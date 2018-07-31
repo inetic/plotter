@@ -1,0 +1,104 @@
+<html>
+<style type="text/css" media="screen">
+    body { background:#eee; margin:0 }
+    svg {
+      display:block; border:1px solid #ccc; position:absolute;
+      top:2%; left:2%; width:96%; height:96%; background:#fff;
+    }
+</style>
+<body>
+
+<svg id="canvas" width="100%" height="100%"/>
+
+<script type="text/javascript">
+
+"use strict"
+
+function sleep(ms) {
+  return new Promise(resolve => { setTimeout(() => resolve(), ms); });
+}
+
+function coin_flip(weight) {
+    return Math.random() < weight;
+}
+
+function step(a, b, p) {
+    var A_won = coin_flip(p);
+    if (A_won) {
+        if (a < b) return { finish: false, a: 2 * a, b: b - a, x: 1};
+        else       return { finish: true,  a: a + b, b: 0    , x: 2};
+    }
+    else { // B_won
+        if (a <= b) return { finish: true,  a: 0,     b: b + a , x: 3};
+        else        return { finish: false, a: a - b, b: 2 * b , x: 4};
+    }
+}
+
+// Return true if A wins
+function simulate_game(a, b, p) {
+    while (true) {
+        var r = step(a, b, p);
+        if (r.finish) return r.a > r.b;
+        a = r.a;
+        b = r.b;
+    }
+}
+
+function sample(a, b, p, sample_size) {
+    var a_wins = 0;
+    for (var i = 0; i < sample_size; ++i) {
+        if (simulate_game(a, b, p)) a_wins++;
+    }
+    return a_wins / sample_size;
+}
+
+function plot(vs, color) {
+    var canvas = document.getElementById('canvas');
+    var box = canvas.getBBox();
+    var poly = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+    var points = "";
+
+    function coord(v) {
+        var w = canvas.clientWidth;
+        var h = canvas.clientHeight;
+        return (v.x * w) + "," + (h - v.y * h) + " ";
+    }
+
+    for (var i in vs) {
+        points += coord(vs[i]);
+    }
+
+    poly.setAttributeNS(null, "points", points);
+    poly.setAttributeNS(null, "style", "fill:white;stroke:" + color + ";stroke-width:1");
+
+    canvas.appendChild(poly);
+}
+
+async function main() {
+    var values = [];
+    var divs = 500;
+    var p = 0.15;
+    for (var i = 0; i < divs + 1; ++i) {
+        var x = i/divs;
+        var y = sample(x, 1 - x, p, 100*1000);
+        values[i] = { x: x, y: y};
+        if (i % 20 == 0) plot(values, "gray");
+        await sleep(10);
+    }
+    console.log(values);
+    var sum_x = 0;
+    var sum_y = 0;
+    for (var i in values) {
+        sum_x += values[i].y;
+        sum_y += 1;
+    }
+    console.log(">> " + (sum_x / sum_y));
+    plot(values, "gray");
+}
+
+main().then(() => console.log("Done"));
+
+</script>
+
+</body>
+</html>
