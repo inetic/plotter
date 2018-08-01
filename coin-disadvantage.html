@@ -8,7 +8,7 @@
 </style>
 <body>
 
-<svg id="canvas" width="100%" height="100%"/>
+<svg id="canvas" width="100%" height="100%"></svg>
 
 <script type="text/javascript">
 
@@ -52,48 +52,34 @@ function sample(a, b, p, sample_size) {
     return a_wins / sample_size;
 }
 
-function plot(vs, color) {
+async function plot(f, color) {
+    if (color == undefined) color = "black";
     var canvas = document.getElementById('canvas');
-    var box = canvas.getBBox();
     var poly = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
-    var points = "";
-
-    function coord(v) {
-        var w = canvas.clientWidth;
-        var h = canvas.clientHeight;
-        return (v.x * w) + "," + (h - v.y * h) + " ";
-    }
-
-    for (var i in vs) {
-        points += coord(vs[i]);
-    }
-
-    poly.setAttributeNS(null, "points", points);
-    poly.setAttributeNS(null, "style", "fill:white;stroke:" + color + ";stroke-width:1");
+    var w = canvas.clientWidth;
+    var h = canvas.clientHeight;
+    var s = 250;
 
     canvas.appendChild(poly);
+    poly.setAttributeNS(null, "style", "fill:white;stroke:" + color + ";stroke-width:1");
+
+    function coord(x, y) {
+        return (x * w) + "," + (h - y * h) + " ";
+    }
+
+    var points = "";
+
+    for (var i = 0; i <= s; ++i) {
+        var x = i / s;
+        points += coord(x, f(x));
+        poly.setAttributeNS(null, "points", points);
+        await sleep(0);
+    }
 }
 
 async function main() {
-    var values = [];
-    var divs = 500;
-    var p = 0.15;
-    for (var i = 0; i < divs + 1; ++i) {
-        var x = i/divs;
-        var y = sample(x, 1 - x, p, 100*1000);
-        values[i] = { x: x, y: y};
-        if (i % 20 == 0) plot(values, "gray");
-        await sleep(10);
-    }
-    console.log(values);
-    var sum_x = 0;
-    var sum_y = 0;
-    for (var i in values) {
-        sum_x += values[i].y;
-        sum_y += 1;
-    }
-    console.log(">> " + (sum_x / sum_y));
-    plot(values, "gray");
+    function f(x) { return sample(x, 1-x, 1/3, 1000*1000); };
+    await plot(f);
 }
 
 main().then(() => console.log("Done"));
