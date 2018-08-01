@@ -25,12 +25,12 @@ function coin_flip(weight) {
 function step(a, b, p) {
     var A_won = coin_flip(p);
     if (A_won) {
-        if (a < b) return { finish: false, a: 2 * a, b: b - a, x: 1};
-        else       return { finish: true,  a: a + b, b: 0    , x: 2};
+        if (a < b) return { finish: false, a: 2 * a, b: b - a};
+        else       return { finish: true,  a: a + b, b: 0    };
     }
     else { // B_won
-        if (a <= b) return { finish: true,  a: 0,     b: b + a , x: 3};
-        else        return { finish: false, a: a - b, b: 2 * b , x: 4};
+        if (a <= b) return { finish: true,  a: 0,     b: b + a};
+        else        return { finish: false, a: a - b, b: 2 * b};
     }
 }
 
